@@ -1,0 +1,9 @@
+{
+  "generator-node": {
+    "promptValues": {
+      "authorName": "Alfredo Fialho",
+      "authorEmail": "alfoltran@gmail.com",
+      "authorUrl": "https://github.com/alfoltran"
+    }
+  }
+}

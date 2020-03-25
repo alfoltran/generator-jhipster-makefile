@@ -1,0 +1,33 @@
+CONTAINER_NAME = <%- baseName %>
+
+ENV_NAME = <%- hostName %>
+ENV_TYPE = <%- profiles %>
+
+TEST_SCRIPT = src/main/script/test.sh
+BUILD_SCRIPT = src/main/script/build.sh
+DEPLOY_SCRIPT = src/main/script/deploy.sh
+
+GIT_SHA=XYZ
+GIT_REF=XYZ
+GIT_TOKEN=XYZ
+
+.DEFAULT: help
+
+.PHONY: help config test build deploy all
+
+help:
+	@echo -e "Use: make [target]\n Valid targets: help, config, test, build, deploy or all"
+
+config:
+	@echo "$$(git rev-parse HEAD) -> $$(git rev-parse --abbrev-ref HEAD)"
+
+test:
+	@$(TEST_SCRIPT) $(GIT_SHA) $(GIT_REF) $(GIT_TOKEN)
+
+build: test
+	@$(BUILD_SCRIPT) $(ENV_TYPE) $(GIT_SHA) $(GIT_REF) $(GIT_TOKEN)
+
+deploy: build
+	@$(DEPLOY_SCRIPT) $(CONTAINER_NAME) $(ENV_NAME) $(GIT_SHA) $(GIT_REF) $(GIT_TOKEN)
+
+all: deploy
