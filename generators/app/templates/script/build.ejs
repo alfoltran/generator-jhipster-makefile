@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+
+function notifyCI() {
+  curl --location --request POST "https://gitlab.com/api/v4/projects/<%- projectId %>/statuses/$1?state=$4&ref=$2&name=Docker&description=Build" \
+    --header "PRIVATE-TOKEN: $3" \
+    --header 'Content-Type: application/json' \
+    --data-raw ''
+}
+
+function waitCI() {
+  RESULT=1
+  WATCHDOG=0
+  echo "Waiting WebHook for Quality Gate..."
+  while [ $WATCHDOG -lt 10 ]; do
+    STATE=$(curl -s --location --request GET "https://gitlab.com/api/v4/projects/<%- projectId %>/repository/commits/$1/statuses?name=SonarQube" \
+      --header "PRIVATE-TOKEN: $3" |
+      python3 -c 'import sys, json; print(json.load(sys.stdin)[0]["status"])' 2>/dev/null || echo '---')
+    if [ "$STATE" == 'success' ]; then
+      echo "Building..."
+      WATCHDOG=10
+      RESULT=0
+    elif [ "$STATE" == 'failed' ]; then
+      echo "Canceling..."
+      WATCHDOG=10
+    elif [ "$STATE" == 'canceled' ]; then
+      echo "Canceling..."
+      WATCHDOG=10
+    else
+      echo "Waiting for CI on $2..."
+      WATCHDOG=$((WATCHDOG + 1))
+      sleep 5m
+    fi
+  done
+  return ${RESULT}
+}
+
+if [ "$#" -ne 4 ]; then
+  echo "Use: ./build <<ENV_TYPE>> <<GIT_SHA>> <<GIT_REF>> <<GIT_TOKEN>>"
+  exit 1
+else
+  echo "Building Docker Image..."
+  PROFILE=$1
+  shift 1
+  notifyCI "$@" running
+  if waitCI "$@"; then
+    trap 'notifyCI "$@" failed' err
+    mvn -P"$PROFILE" clean verify jib:dockerBuild -DskipTests=true &&
+      docker tag <%- baseName %> registry.gitlab.com/<%- namespace %>/<%- baseName %> &&
+      docker tag <%- baseName %> registry.gitlab.com/<%- namespace %>/<%- baseName %>:"$2" &&
+      docker push registry.gitlab.com/<%- namespace %>/<%- baseName %> &&
+      docker push registry.gitlab.com/<%- namespace %>/<%- baseName %>:"$2"
+    notifyCI "$@" success
+  else
+    notifyCI "$@" canceled
+  fi
+  echo "Docker done!"
+fi

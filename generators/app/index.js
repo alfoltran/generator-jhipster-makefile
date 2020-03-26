@@ -21,9 +21,19 @@ module.exports = class extends Generator {
         default: true
       },
       {
-        type: "text",
+        type: "input",
         name: "hostName",
         message: "What is the hostname of the server?"
+      },
+      {
+        type: "input",
+        name: "namespace",
+        message: "What is the namespace on GitLab?"
+      },
+      {
+        type: "number",
+        name: "projectId",
+        message: "What is the Project ID on GitLab?"
       }
     ];
 
@@ -56,6 +66,23 @@ module.exports = class extends Generator {
         { filename: "Makefile" },
         (err, str) => {
           if (!err) this.fs.write(this.destinationPath("Makefile"), str);
+        }
+      );
+
+      ejs.renderFile(
+        this.templatePath("script/build.ejs"),
+        {
+          baseName: this.props.baseName,
+          namespace: this.props.namespace,
+          projectId: this.props.projectId
+        },
+        { filename: "build.sh" },
+        (err, str) => {
+          if (!err)
+            this.fs.write(
+              this.destinationPath("src/main/script/build.sh"),
+              str
+            );
         }
       );
     }
