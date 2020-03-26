@@ -2,7 +2,6 @@
 const Generator = require("yeoman-generator");
 const chalk = require("chalk");
 const yosay = require("yosay");
-const ejs = require("ejs");
 
 module.exports = class extends Generator {
   prompting() {
@@ -56,33 +55,23 @@ module.exports = class extends Generator {
 
   writing() {
     if (!this.props.error) {
-      ejs.renderFile(
+      this.fs.copyTpl(
         this.templatePath("makefile.ejs"),
+        this.destinationPath("Makefile"),
         {
           baseName: this.props.baseName,
           hostName: this.props.hostName,
           profiles: this.props.prod ? "prod" : "dev,IDE,swagger"
-        },
-        { filename: "Makefile" },
-        (err, str) => {
-          if (!err) this.fs.write(this.destinationPath("Makefile"), str);
         }
       );
 
-      ejs.renderFile(
+      this.fs.copyTpl(
         this.templatePath("script/build.ejs"),
+        this.destinationPath("src/main/script/build.sh"),
         {
           baseName: this.props.baseName,
           namespace: this.props.namespace,
           projectId: this.props.projectId
-        },
-        { filename: "build.sh" },
-        (err, str) => {
-          if (!err)
-            this.fs.write(
-              this.destinationPath("src/main/script/build.sh"),
-              str
-            );
         }
       );
     }
