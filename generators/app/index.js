@@ -78,6 +78,15 @@ module.exports = class extends Generator {
           projectId: this.props.projectId
         }
       );
+
+      this.fs.copyTpl(
+        this.templatePath("script/deploy.ejs"),
+        this.destinationPath("src/main/script/deploy.sh"),
+        {
+          projectId: this.props.projectId,
+          environment: this.props.prod ? "production" : "staging"
+        }
+      );
     }
   }
 
