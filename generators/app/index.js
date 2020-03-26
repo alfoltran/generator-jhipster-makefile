@@ -49,9 +49,12 @@ module.exports = class extends Generator {
         jhipsterConfig &&
         jhipsterConfig["generator-jhipster"] &&
         jhipsterConfig["generator-jhipster"].baseName
-      )
+      ) {
         this.props.baseName = jhipsterConfig["generator-jhipster"].baseName;
-      else {
+        this.props.frontend =
+          jhipsterConfig["generator-jhipster"].applicationType !==
+          "microservice";
+      } else {
         this.props.error = `${chalk.red("Here is not a JHipster folder!")}`;
       }
     });
@@ -74,7 +77,8 @@ module.exports = class extends Generator {
         this.destinationPath("src/main/script/test.sh"),
         {
           projectId: this.props.projectId,
-          environment: this.props.prod ? "production" : "staging"
+          environment: this.props.prod ? "production" : "staging",
+          frontend: this.props.frontend
         }
       );
 

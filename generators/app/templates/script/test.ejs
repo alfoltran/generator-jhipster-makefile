@@ -14,6 +14,6 @@ else
   trap 'notifyCI "$@" failed' err
   echo "Running SonarQube..."
   notifyCI "$@" running
-  mvn clean && yarn test && mvn -Pdev,IDE,swagger,sonar verify sonar:sonar -DskipTests=false -Dmaven.test.failure.ignore=true
+  mvn clean <%if(frontend){%>&& yarn test <%}%>&& mvn -Pdev,IDE,swagger,sonar verify sonar:sonar -DskipTests=false -Dmaven.test.failure.ignore=true
   echo "SonarQube done!"
 fi
