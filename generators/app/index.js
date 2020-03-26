@@ -17,22 +17,26 @@ module.exports = class extends Generator {
         type: "confirm",
         name: "prod",
         message: "Generate for a production environment?",
-        default: true
+        default: true,
+        store: true
       },
       {
         type: "input",
         name: "hostName",
-        message: "What is the hostname of the server?"
+        message: "What is the hostname of the server?",
+        store: true
       },
       {
         type: "input",
         name: "namespace",
-        message: "What is the namespace on GitLab?"
+        message: "What is the namespace on GitLab?",
+        store: true
       },
       {
         type: "number",
         name: "projectId",
-        message: "What is the Project ID on GitLab?"
+        message: "What is the Project ID on GitLab?",
+        store: true
       }
     ];
 
@@ -40,13 +44,13 @@ module.exports = class extends Generator {
       // To access props later use this.props.someAnswer;
       this.props = props;
       this.destinationRoot(".");
-      const config = this.fs.readJSON(".yo-rc.json");
+      const jhipsterConfig = this.fs.readJSON(".yo-rc.json");
       if (
-        config &&
-        config["generator-jhipster"] &&
-        config["generator-jhipster"].baseName
+        jhipsterConfig &&
+        jhipsterConfig["generator-jhipster"] &&
+        jhipsterConfig["generator-jhipster"].baseName
       )
-        this.props.baseName = config["generator-jhipster"].baseName;
+        this.props.baseName = jhipsterConfig["generator-jhipster"].baseName;
       else {
         this.props.error = `${chalk.red("Here is not a JHipster folder!")}`;
       }
