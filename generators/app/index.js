@@ -70,6 +70,15 @@ module.exports = class extends Generator {
       );
 
       this.fs.copyTpl(
+        this.templatePath("script/test.ejs"),
+        this.destinationPath("src/main/script/test.sh"),
+        {
+          projectId: this.props.projectId,
+          environment: this.props.prod ? "production" : "staging"
+        }
+      );
+
+      this.fs.copyTpl(
         this.templatePath("script/build.ejs"),
         this.destinationPath("src/main/script/build.sh"),
         {
@@ -86,6 +95,21 @@ module.exports = class extends Generator {
           projectId: this.props.projectId,
           environment: this.props.prod ? "production" : "staging"
         }
+      );
+
+      this.fs.copy(
+        this.templatePath("script/setup.sh"),
+        this.destinationPath("src/main/script/setup.sh")
+      );
+
+      this.fs.copy(
+        this.templatePath("script/polling.sh"),
+        this.destinationPath("src/main/script/polling.sh")
+      );
+
+      this.fs.copy(
+        this.templatePath("script/watchdog.sh"),
+        this.destinationPath("src/main/script/watchdog.sh")
       );
     }
   }

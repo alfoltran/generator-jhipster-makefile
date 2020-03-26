@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+function notifyCI() {
+  curl --location --request POST "https://gitlab.com/api/v4/projects/<%- projectId %>/statuses/$1?state=$4&ref=$2&name=SonarQube&description=Continuous%20Code%20Quality" \
+    --header "PRIVATE-TOKEN: $3" \
+    --header 'Content-Type: application/json' \
+    --data-raw ''
+}
+
+if [ "$#" -ne 3 ]; then
+  echo "Use: ./test <<GIT_SHA>> <<GIT_REF>> <<GIT_TOKEN>>"
+  exit 1
+else
+  trap 'notifyCI "$@" failed' err
+  echo "Running SonarQube..."
+  notifyCI "$@" running
+  mvn clean && yarn test && mvn -Pdev,IDE,swagger,sonar verify sonar:sonar -DskipTests=false -Dmaven.test.failure.ignore=true
+  echo "SonarQube done!"
+fi
