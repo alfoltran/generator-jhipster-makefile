@@ -46,9 +46,7 @@ function update() {
     notifyCI "$@" created "$ENV_NAME"
     if waitCI "$@"; then
       trap 'notifyCI "$@" failed' err
-      docker stop "$CONTAINER_NAME" &&
-        docker-compose pull &&
-        docker-compose up -d --no-deps --build "$CONTAINER_NAME"
+      docker-compose pull && docker-compose up -d --no-deps --build "$CONTAINER_NAME"
       notifyCI "$@" success
     else
       notifyCI "$@" canceled
