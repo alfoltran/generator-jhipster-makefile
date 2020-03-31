@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+docker run -d --name <%- baseName %>-gitlab-runner --restart always \
+  -v /srv/<%- baseName %>-gitlab-runner/config:/etc/gitlab-runner \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  gitlab/gitlab-runner:latest &&
+  docker run --rm -v /srv/<%- baseName %>-gitlab-runner/config:/etc/gitlab-runner gitlab/gitlab-runner register \
+    --non-interactive \
+    --executor "docker" \
+    --docker-image jhipster/jhipster:latest \
+    --url "https://gitlab.com/" \
+    --registration-token "$1" \
+    --description "<%- description %> Docker Runner" \
+    --tag-list "docker,<%- baseName %>" \
+    --run-untagged="true" \
+    --locked="true" \
+    --access-level="not_protected"

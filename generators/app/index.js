@@ -44,6 +44,7 @@ module.exports = class extends Generator {
       // To access props later use this.props.someAnswer;
       this.props = props;
       this.destinationRoot(".");
+      const jhipsterPackage = this.fs.readJSON("package.json");
       const jhipsterConfig = this.fs.readJSON(".yo-rc.json");
       if (
         jhipsterConfig &&
@@ -54,6 +55,10 @@ module.exports = class extends Generator {
         this.props.frontend =
           jhipsterConfig["generator-jhipster"].applicationType !==
           "microservice";
+        this.props.description =
+          jhipsterPackage && jhipsterPackage.description
+            ? jhipsterPackage.description
+            : "JHipster";
       } else {
         this.props.error = `${chalk.red("Here is not a JHipster folder!")}`;
       }
@@ -98,6 +103,15 @@ module.exports = class extends Generator {
         {
           projectId: this.props.projectId,
           environment: this.props.prod ? "production" : "staging"
+        }
+      );
+
+      this.fs.copyTpl(
+        this.templatePath("script/gitlab-runner.ejs"),
+        this.destinationPath("src/main/script/gitlab-runner.sh"),
+        {
+          baseName: this.props.baseName,
+          description: this.props.description
         }
       );
 
