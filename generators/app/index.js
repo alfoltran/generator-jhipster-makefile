@@ -55,6 +55,11 @@ module.exports = class extends Generator {
         this.props.frontend =
           jhipsterConfig["generator-jhipster"].applicationType !==
           "microservice";
+        this.props.react =
+          jhipsterConfig["generator-jhipster"].applicationType === "react";
+        this.props.projectUrl = jhipsterConfig["generator-jhipster"].url
+          ? jhipsterConfig["generator-jhipster"].url
+          : "http://localhost:9000";
         this.props.description =
           jhipsterPackage && jhipsterPackage.description
             ? jhipsterPackage.description
@@ -67,67 +72,82 @@ module.exports = class extends Generator {
 
   writing() {
     if (!this.props.error) {
-      this.fs.copyTpl(
-        this.templatePath("makefile.ejs"),
-        this.destinationPath("Makefile"),
-        {
-          baseName: this.props.baseName,
-          hostName: this.props.hostName,
-          profiles: this.props.prod ? "prod" : "dev,IDE,swagger"
-        }
-      );
+      if (this.props.react) {
+        this.fs.copyTpl(
+          this.templatePath("script/docker-polling.ejs"),
+          this.destinationPath("script/polling.sh"),
+          {
+            baseName: this.props.baseName,
+            namespace: this.props.namespace,
+            environment: this.props.prod ? "production" : "staging",
+            projectUrl: this.props.projectUrl
+          }
+        );
+      } else {
+        this.fs.copyTpl(
+          this.templatePath("makefile.ejs"),
+          this.destinationPath("Makefile"),
+          {
+            baseName: this.props.baseName,
+            hostName: this.props.hostName,
+            profiles: this.props.prod ? "prod" : "dev,IDE,swagger"
+          }
+        );
 
-      this.fs.copyTpl(
-        this.templatePath("script/test.ejs"),
-        this.destinationPath("src/main/script/test.sh"),
-        {
-          projectId: this.props.projectId,
-          environment: this.props.prod ? "production" : "staging",
-          frontend: this.props.frontend
-        }
-      );
+        this.fs.copyTpl(
+          this.templatePath("script/test.ejs"),
+          this.destinationPath("src/main/script/test.sh"),
+          {
+            projectId: this.props.projectId,
+            environment: this.props.prod ? "production" : "staging",
+            frontend: this.props.frontend
+          }
+        );
 
-      this.fs.copyTpl(
-        this.templatePath("script/build.ejs"),
-        this.destinationPath("src/main/script/build.sh"),
-        {
-          baseName: this.props.baseName,
-          namespace: this.props.namespace,
-          projectId: this.props.projectId
-        }
-      );
+        this.fs.copyTpl(
+          this.templatePath("script/build.ejs"),
+          this.destinationPath("src/main/script/build.sh"),
+          {
+            baseName: this.props.baseName,
+            namespace: this.props.namespace,
+            projectId: this.props.projectId
+          }
+        );
 
-      this.fs.copyTpl(
-        this.templatePath("script/deploy.ejs"),
-        this.destinationPath("src/main/script/deploy.sh"),
-        {
-          projectId: this.props.projectId,
-          environment: this.props.prod ? "production" : "staging"
-        }
-      );
+        this.fs.copyTpl(
+          this.templatePath("script/deploy.ejs"),
+          this.destinationPath("src/main/script/deploy.sh"),
+          {
+            projectId: this.props.projectId,
+            environment: this.props.prod ? "production" : "staging"
+          }
+        );
+
+        this.fs.copy(
+          this.templatePath("script/setup.sh"),
+          this.destinationPath("src/main/script/setup.sh")
+        );
+
+        this.fs.copy(
+          this.templatePath("script/watchdog.sh"),
+          this.destinationPath("src/main/script/watchdog.sh")
+        );
+
+        this.fs.copy(
+          this.templatePath("script/git-polling.sh"),
+          this.destinationPath("src/main/script/polling.sh")
+        );
+      }
 
       this.fs.copyTpl(
         this.templatePath("script/gitlab-runner.ejs"),
-        this.destinationPath("src/main/script/gitlab-runner.sh"),
+        this.destinationPath(
+          `${this.props.react ? "" : "src/main/"}script/gitlab-runner.sh`
+        ),
         {
           baseName: this.props.baseName,
           description: this.props.description
         }
-      );
-
-      this.fs.copy(
-        this.templatePath("script/setup.sh"),
-        this.destinationPath("src/main/script/setup.sh")
-      );
-
-      this.fs.copy(
-        this.templatePath("script/polling.sh"),
-        this.destinationPath("src/main/script/polling.sh")
-      );
-
-      this.fs.copy(
-        this.templatePath("script/watchdog.sh"),
-        this.destinationPath("src/main/script/watchdog.sh")
       );
     }
   }

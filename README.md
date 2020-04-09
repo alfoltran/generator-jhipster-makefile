@@ -1,5 +1,13 @@
-# generator-jhipster-makefile [![NPM version][npm-image]][npm-url] [![Build Status][travis-image]][travis-url] [![Dependency Status][daviddm-image]][daviddm-url]
+# generator-jhipster-makefile
 > Yeoman generator to create a JHipster Makefile and Bash scripts
+
+## Description
+
+A generator, very specific yet, to generate some build, test and deployment scripts.
+
+Always use Makefile, Bash, GitLab and Discord.
+
+**Use it on an "as-is" basis to create your own generator.**
 
 ## Installation
 
@@ -26,11 +34,3 @@ yo jhipster-makefile
 ## License
 
 MIT © [Alfredo Fialho](https://github.com/alfoltran)
-
-
-[npm-image]: https://badge.fury.io/js/generator-jhipster-makefile.svg
-[npm-url]: https://npmjs.org/package/generator-jhipster-makefile
-[travis-image]: https://travis-ci.com/alfoltran/generator-jhipster-makefile.svg?branch=master
-[travis-url]: https://travis-ci.com/alfoltran/generator-jhipster-makefile
-[daviddm-image]: https://david-dm.org/alfoltran/generator-jhipster-makefile.svg?theme=shields.io
-[daviddm-url]: https://david-dm.org/alfoltran/generator-jhipster-makefile

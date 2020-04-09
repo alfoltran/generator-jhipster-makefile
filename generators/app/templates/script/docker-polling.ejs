@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+#
+# Register the cron job with:
+# crontab -u ci -e
+#
+# SHELL=/bin/bash
+# * * * * * cd /home/ci/<%- baseName %> && ./polling.sh [WebHook ID] [WebHook Token] >/dev/null 2>&1
+#
+
+function notify() {
+  # shellcheck disable=SC2016
+  curl -s --header "Content-Type: application/json" \
+    --request POST \
+    --data '{"content": ":exclamation: Could not update the environment `<%- environment %>`!"}' \
+    https://discordapp.com/api/webhooks/"$1"/"$2"
+}
+
+function polling() {
+  LAST_ID=$(cat .curr_id 2>/dev/null || true)
+  RESULT=1
+  if [ "$1" != "$LAST_ID" ]; then
+    echo "$1" >.curr_id
+    RESULT=0
+  fi
+  return ${RESULT}
+}
+
+function triggerDeploy() {
+  echo "Starting deploy of image $3..."
+  docker-compose up -d --build
+  curl -s --header "Content-Type: application/json" \
+    --request POST \
+    --data "{\"content\": \":rocket: Environment [\`<%- environment %>\`](<%- projectUrl %>) updated with image [\`$3\`](https://gitlab.com/<%- namespace %>/<%- baseName %>/container_registry)!\"}" \
+    https://discordapp.com/api/webhooks/"$1"/"$2"
+  echo "Deploy done!"
+}
+
+(
+  if (flock -n 1001); then
+    echo "Starting polling job..."
+    trap 'notify "$@"' err
+    CURR_ID=$(docker images --format "{{.ID}}" --filter=reference='registry.gitlab.com/<%- namespace %>/<%- baseName %>:latest')
+    if polling "$CURR_ID"; then
+      triggerDeploy "$@" "$CURR_ID"
+    fi
+    echo "Done!"
+  else
+    echo "Already there is a process running!"
+  fi
+) 1001>.cicd
