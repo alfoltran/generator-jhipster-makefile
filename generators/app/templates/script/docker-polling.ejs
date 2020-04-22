@@ -27,12 +27,12 @@ function polling() {
 
 function triggerDeploy() {
   echo "Starting deploy of image $3..."
-  docker-compose up -d --build
-  curl -s --header "Content-Type: application/json" \
-    --request POST \
-    --data "{\"content\": \":rocket: Environment [\`<%- environment %>\`](<%- projectUrl %>) updated with image [\`$3\`](https://gitlab.com/<%- namespace %>/<%- baseName %>/container_registry)!\"}" \
-    https://discordapp.com/api/webhooks/"$1"/"$2"
-  echo "Deploy done!"
+  docker-compose up -d --build &&
+    curl -s --header "Content-Type: application/json" \
+      --request POST \
+      --data "{\"content\": \":rocket: Environment [\`<%- environment %>\`](<%- projectUrl %>) updated with image [\`$3\`](https://gitlab.com/<%- namespace %>/<%- baseName %>/container_registry)!\"}" \
+      https://discordapp.com/api/webhooks/"$1"/"$2"
+  return $?
 }
 
 (
