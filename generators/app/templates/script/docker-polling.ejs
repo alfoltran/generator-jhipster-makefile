@@ -4,7 +4,7 @@
 # crontab -u ci -e
 #
 # SHELL=/bin/bash
-# * * * * * cd /home/ci/<%- baseName %> && ./polling.sh [WebHook ID] [WebHook Token] >/dev/null 2>&1
+# * * * * * cd /home/ci/<%- baseName %> && script/polling.sh [WebHook ID] [WebHook Token] [Services] >/dev/null 2>&1
 #
 
 function notify() {
@@ -16,34 +16,53 @@ function notify() {
 }
 
 function polling() {
-  LAST_ID=$(cat .curr_id 2>/dev/null || true)
+  LAST_ID=$(cat ".curr_id_$2" 2>/dev/null || true)
   RESULT=1
   if [ "$1" != "$LAST_ID" ]; then
-    echo "$1" >.curr_id
+    echo "$1" >".curr_id_$2"
     RESULT=0
   fi
   return ${RESULT}
 }
 
 function triggerDeploy() {
-  echo "Starting deploy of image $3..."
-  docker-compose up -d --build &&
+  echo "Starting deploy of $4 image $3..."
+  docker-compose -p <%- namespace %> up -d --no-deps --build "$4-app" &&
     curl -s --header "Content-Type: application/json" \
       --request POST \
-      --data "{\"content\": \":rocket: Environment [\`<%- environment %>\`](<%- projectUrl %>) updated with image [\`$3\`](https://gitlab.com/<%- namespace %>/<%- baseName %>/container_registry)!\"}" \
+      --data "{\"content\": \":rocket: Environment [\`<%- environment %>\`](<%- projectUrl %>) updated with $4 image [\`$3\`](https://gitlab.com/<%- namespace %>/$4/container_registry)!\"}" \
       https://discordapp.com/api/webhooks/"$1"/"$2"
   return $?
 }
 
+function runner() {
+  if [ "$#" -lt 3 ]; then
+    echo "Use: ./polling.sh [WebHook ID] [WebHook Token] [Services]"
+    exit 0
+  else
+    WebHookID=$1
+    WebHookToken=$2
+    shift 2
+    for service in "$@"; do
+      if CURR_ID=$(docker images --format "{{.ID}}" --filter=reference="registry.gitlab.com/<%- namespace %>/$service:latest"); then
+        if polling "$CURR_ID" "$service"; then
+          triggerDeploy "$WebHookID" "$WebHookToken" "$CURR_ID" "$service"
+          return $?
+        fi
+      else
+        return $?
+      fi
+    done
+    echo "Done!"
+    return 0
+  fi
+}
+
 (
   if (flock -n 1001); then
-    echo "Starting polling job..."
     trap 'notify "$@"' err
-    CURR_ID=$(docker images --format "{{.ID}}" --filter=reference='registry.gitlab.com/<%- namespace %>/<%- baseName %>:latest')
-    if polling "$CURR_ID"; then
-      triggerDeploy "$@" "$CURR_ID"
-    fi
-    echo "Done!"
+    echo "Starting polling job..."
+    runner "$@"
   else
     echo "Already there is a process running!"
   fi
